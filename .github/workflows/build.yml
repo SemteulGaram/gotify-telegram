@@ -57,11 +57,15 @@ jobs:
           prerelease: false
 
       - name: Upload release assets
-        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/
-          asset_name: ${{ github.ref }}
-          asset_content_type: application/x-sharedlib
+        run: |
+          for file in build/*; do
+            echo "Uploading $file"
+            curl -sSL \
+              -XPOST \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary @$file \
+              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=$(basename $file)"
+          done
