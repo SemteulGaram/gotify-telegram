@@ -41,8 +41,9 @@ type GotifyMessage struct {
 }
 
 type Payload struct {
-	ChatID string `json:"chat_id"`
-	Text   string `json:"text"`
+	ChatID    string `json:"chat_id"`
+	Text      string `json:"text"`
+	ParseMode string `json:"parse_mode"`
 }
 
 func (c *MyPlugin) get_websocket_msg() {
@@ -81,8 +82,9 @@ func (c *MyPlugin) connect_websocket() {
 func (p *MyPlugin) send_msg_to_telegram(msg string) {
 	data := Payload{
 		// Fill struct
-		ChatID: p.telegram_chatid,
-		Text:   msg,
+		ChatID:    p.telegram_chatid,
+		Text:      msg,
+		ParseMode: "MarkdownV2",
 	}
 	payloadBytes, err := json.Marshal(data)
 	if err != nil {
