@@ -41,9 +41,9 @@ type GotifyMessage struct {
 }
 
 type Payload struct {
+	ParseMode string `json:"parse_mode"`
 	ChatID    string `json:"chat_id"`
 	Text      string `json:"text"`
-	ParseMode string `json:"parse_mode"`
 }
 
 func (c *MyPlugin) get_websocket_msg() {
@@ -79,21 +79,21 @@ func (c *MyPlugin) connect_websocket() {
 	}
 }
 
-func (p *MyPlugin) send_msg_to_telegram(msg string) {
+func (c *MyPlugin) send_msg_to_telegram(msg string) {
 	data := Payload{
 		// Fill struct
-		ChatID:    p.telegram_chatid,
+		ChatID:    c.telegram_chatid,
 		Text:      msg,
 		ParseMode: "MarkdownV2",
 	}
 	payloadBytes, err := json.Marshal(data)
-	if err != nil {
+	if c.ws != nil && err != nil {
 		fmt.Println("Create json false")
 		return
 	}
 	body := bytes.NewReader(payloadBytes)
 
-	req, err := http.NewRequest("POST", "https://api.telegram.org/bot"+p.telegram_bot_token+"/sendMessage", body)
+	req, err := http.NewRequest("POST", "https://api.telegram.org/bot"+c.telegram_bot_token+"/sendMessage", body)
 	if err != nil {
 		fmt.Println("Create request false")
 		return
@@ -113,6 +113,9 @@ func (c *MyPlugin) Enable() error {
 	c.gotify_url = os.Getenv("GOTIFY_HOST") + "/stream?token=" + os.Getenv("GOTIFY_CLIENT_TOKEN")
 	c.telegram_chatid = os.Getenv("TELEGRAM_CHAT_ID")
 	c.telegram_bot_token = os.Getenv("TELEGRAM_BOT_TOKEN")
+
+	// Wait a bit for gotify to start
+	time.Sleep(time.Second * 3)
 	go c.get_websocket_msg()
 	return nil
 }
@@ -121,6 +124,7 @@ func (c *MyPlugin) Enable() error {
 func (c *MyPlugin) Disable() error {
 	if c.ws != nil {
 		c.ws.Close()
+		c.ws = nil
 	}
 	return nil
 }
